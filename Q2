@@ -1,0 +1,13 @@
+SELECT 
+    app_id,
+COUNT(DISTINCT CONCAT(uo.user_id, '-', uo.offer_id)) AS total_users_initiated,
+    COUNT(DISTINCT CONCAT(uocd.user_id, '-', uocd.reward_id)) AS total_users_completed,
+    SUM(total_payout_in_paise) AS revenue_earned_byusers,
+    SUM(rd.total_revenue_in_paise)/100 AS total_revenue_generated
+FROM 
+    `extended-optics-386306.firsy.User_offer_data` uo
+    JOIN `extended-optics-386306.firsy.rewards_details` rd ON uo.offer_id = rd.offer_id
+    LEFT JOIN  `extended-optics-386306.firsy.User_offer_completion_data` uocd ON uo.user_id = uocd.user_id
+
+GROUP BY 
+    app_id
