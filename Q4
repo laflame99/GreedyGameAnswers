@@ -1,0 +1,150 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import io
+%matplotlib inline
+
+
+from google.colab import files
+uploaded = files.upload()
+
+df = pd.read_csv(io.BytesIO(uploaded['Q4_ADX_Sample_data.csv']))
+
+df["date"] = pd.to_datetime(df["date"],format='%d-%m-%Y')  
+df['pub_id'] = df['pub_id'].astype(str)
+df['app_id'] = df['app_id'].astype(str)
+df['ad_unit_code'] = df['ad_unit_code'].astype(str)
+df['show_rate'] = df['ae_impressions'] / df['ae_responses']
+df['click_rate'] = df['ae_clicks'] / df['ae_impressions']
+df['revenue_per_impression'] = df['ae_revenue'] / df['ae_impressions']
+df['impression_request_ratio'] = df['ae_impressions']/df['requests']
+
+
+
+Hypothesis1: Apps with a higher than average revenue per impression may be more effective at monetizing their ad inventory.
+
+
+
+# Calculate the average revenue per impression for all apps
+average_rpi = df['revenue_per_impression'].mean()
+
+# Rank the apps based on their revenue per impression
+ranked_apps = df.groupby('app_id')['revenue_per_impression'].mean().sort_values(ascending=False)
+
+# Print the ranked apps
+print(ranked_apps)
+
+# Create a bar plot to visualize the revenue per impression for each app
+plt.bar(ranked_apps.index, ranked_apps.values)
+plt.axhline(y=average_rpi, color='r', linestyle='--', label='Average RPI')
+plt.xticks(rotation=90)
+plt.xlabel('App ID')
+plt.ylabel('Revenue per Impression')
+plt.legend()
+plt.show()
+
+
+Hypothesis2: Apps with a higher than average show rate but lower than average click rate may be displaying too many ads and causing user annoyance, leading to lower engagement and revenue.
+
+# calculate average show rate and click rate for all apps
+avg_show_rate = df['show_rate'].mean()
+avg_click_rate = df['click_rate'].mean()
+
+# create a new column to flag apps that meet the hypothesis
+df['flag'] = ((df['show_rate'] > avg_show_rate) & (df['click_rate'] < avg_click_rate)).astype(int)
+
+# group the data by app_id and sum the flag column to get a count of apps meeting the hypothesis for each app
+app_flags = df.groupby('app_id')['flag'].sum().reset_index()
+
+# sort the apps based on the count of apps meeting the hypothesis
+ranked_apps = app_flags.sort_values('flag', ascending=False)
+
+# print the ranked apps
+print(ranked_apps)
+
+
+# create a bar chart of the ranked apps
+plt.bar(ranked_apps['app_id'], ranked_apps['flag'])
+plt.xticks(rotation=90)
+plt.xlabel('App ID')
+plt.ylabel('Count of Apps Meeting Hypothesis')
+plt.title('Apps Meeting Hypothesis - Higher Show Rate and Lower Click Rate')
+plt.show()
+
+
+Hypothesis3: Certain ad units may perform better than others. If an app uses multiple ad units, it is possible that some ad units perform better than others in terms of impressions, clicks, and revenue. By analyzing the performance of each ad unit, publishers could identify which ad units are most effective and adjust their ad strategies accordingly.
+
+# group data by ad format (ad_unit_code) and calculate the mean CTR for each ad format
+ad_format_ctr = df.groupby('ad_unit_code')['click_rate'].mean().reset_index()
+
+# filter for ad formats with CTR greater than overall average CTR
+overall_avg_ctr = df['click_rate'].mean()
+high_ctr_ad_formats = ad_format_ctr[ad_format_ctr['click_rate'] > overall_avg_ctr]
+
+# rank the ad formats based on their CTR and display top 10 ad formats
+high_ctr_ad_formats = high_ctr_ad_formats.sort_values('click_rate', ascending=False)
+top_10_ad_formats = high_ctr_ad_formats.head(10)
+print(top_10_ad_formats)
+
+# group data by app_id and ad_unit_code and calculate the mean CTR for each combination
+app_ad_ctr = df.groupby(['app_id', 'ad_unit_code'])['click_rate'].mean().reset_index()
+
+# select top 5 ad units with highest CTR for each app
+top_ad_units = app_ad_ctr.groupby('app_id').apply(lambda x: x.nlargest(5, 'click_rate')).reset_index(drop=True)
+
+# plot CTR for each app and top 5 ad units
+for app in top_ad_units['app_id'].unique():
+    app_data = top_ad_units[top_ad_units['app_id'] == app]
+    plt.figure()
+    plt.title(f"Click-through rate for app_id {app}")
+    plt.xlabel("Ad unit code")
+    plt.ylabel("Click-through rate")
+    plt.bar(app_data['ad_unit_code'], app_data['click_rate'])
+    plt.xticks(rotation=90)
+    plt.show()
+
+
+Hypothesis4 - An app with a high number of requests but a low number of impressions may indicate a technical issue or ad quality issue. If an app has a high number of ad requests but a low number of impressions, it could indicate that there is a technical issue with the app or ad server, or that the ads being served are not rendering properly. This could lead to lower revenue for the publisher as well as a poor user experience.
+
+# Calculate the request rate and impression rate for each app
+df['request_rate'] = df['requests'] / df['ae_responses']
+df['impression_rate'] = df['ae_impressions'] / df['requests']
+
+# Group the data by app_id and calculate the mean request rate and impression rate
+grouped_df = df.groupby('app_id')[['request_rate', 'impression_rate']].mean().reset_index()
+
+# Plot a scatter plot to visualize the relationship between request rate and impression rate for each app
+sns.scatterplot(x='request_rate', y='impression_rate', hue='app_id', data=grouped_df)
+plt.xlabel('Request Rate')
+plt.ylabel('Impression Rate')
+plt.title('Relationship between Request Rate and Impression Rate for each App')
+plt.show()
+
+
+
+
+# Calculate ratio of requests to impressions for each app
+ratio_df = df.groupby('app_id').agg({'requests': 'sum', 'ae_impressions': 'sum'})
+ratio_df['impression_request_ratio'] =  ratio_df['ae_impressions']/ratio_df['requests']
+
+# Sort apps by ratio in descending order
+ratio_df = ratio_df.sort_values('impression_request_ratio', ascending=False)
+
+# Print top 10 apps by ratio
+print(ratio_df.head(10))
+
+
+# Sort the apps based on the impression requests ratio
+ranked_apps = df.groupby('app_id').mean().sort_values('impression_request_ratio', ascending=False)
+
+# Create a barplot to visualize the ranked apps
+plt.figure(figsize=(10, 6))
+sns.barplot(x=ranked_apps.index, y='impression_request_ratio', data=ranked_apps)
+plt.xticks(rotation=90)
+plt.title('Apps Ranked by impression_request_ratio')
+plt.xlabel('App ID')
+plt.ylabel('impression_request_ratio')
+plt.show()
+
+
