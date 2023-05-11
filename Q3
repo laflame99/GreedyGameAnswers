@@ -2,10 +2,9 @@ import pandas as pd
 import io
 import torch
 
-from google.colab import files
-uploaded = files.upload()
+!wget https://raw.githubusercontent.com/laflame99/GreedyGameAnswers/main/Q3_Sikka%20data.csv
 
-df = pd.read_csv(io.BytesIO(uploaded['Q3_Sikka data.csv']))
+df = pd.read_csv(open('Q3_Sikka data.csv.1','r'))
 
 df["Date"] = pd.to_datetime(df["Date"],format='%Y-%m-%d')  
 
@@ -63,3 +62,4 @@ forecast_y = regressor.predict(forecast_X)
 # Print the predicted number of referrals for each day
 for i, referral in enumerate(forecast_y):
     print("Day {}: {}".format(i+1, referral))
+
