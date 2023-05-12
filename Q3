@@ -4,7 +4,7 @@ import torch
 
 !wget https://raw.githubusercontent.com/laflame99/GreedyGameAnswers/main/Q3_Sikka%20data.csv
 
-df = pd.read_csv(open('Q3_Sikka data.csv.1','r'))
+df = pd.read_csv(open('Q3_Sikka data.csv','r'))
 
 df["Date"] = pd.to_datetime(df["Date"],format='%Y-%m-%d')  
 
