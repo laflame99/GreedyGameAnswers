@@ -1,65 +1,50 @@
+#Data Preparation:
 import pandas as pd
 import io
 import torch
+import numpy as np
 
 !wget https://raw.githubusercontent.com/laflame99/GreedyGameAnswers/main/Q3_Sikka%20data.csv
 
 df = pd.read_csv(open('Q3_Sikka data.csv','r'))
-
 df["Date"] = pd.to_datetime(df["Date"],format='%Y-%m-%d')  
-
 oct_data = df[df['Date']<'2022-11-01']
 nov_data = df[df['Date'] >='2022-11-01']
 
-features = ['DAU', 'Installs', 'Uninstalls', 'Signups']
 
-# Extract the features and target variable from the data
+#Feature Selection:
+features = ['DAU', 'Installs', 'Uninstalls', 'Signups']
 X = oct_data[features]
 y = oct_data['Referrals']
 
-from sklearn.preprocessing import StandardScaler
 
-# Initialize a StandardScaler object
+#Data Normalization:
+from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
-# Scale the features to have mean 0 and standard deviation 1
 X = scaler.fit_transform(X)
 
+
+#Model Training:
 from sklearn.linear_model import LinearRegression
-
-# Initialize a LinearRegression object
 regressor = LinearRegression()
-
-# Train the model on the training set
 regressor.fit(X, y)
 
-import numpy as np
 
-# Split the data into training and test sets
+#Model Evaluation:
 n = int(X.shape[0]*.9)
 train_X = X[:n]
 test_X = X[n:]
 train_y = y[:n]
 test_y = y[n:]
-
-# Predict the target variable on the test set
 predictions = regressor.predict(test_X)
-
-# Calculate the mean absolute error between the predicted and actual values
 mae = np.mean(np.abs(predictions - test_y))
 print("Mean Absolute Error:", mae)
 
-features = ['DAU', 'Installs', 'Uninstalls', 'Signups']
 
-# Extract the features and target variable from the data
+#Model Evaluation:
 forecast_X = nov_data[features]
-
-# Scale the features to have mean 0 and standard deviation 1
 forecast_X = scaler.fit_transform(forecast_X)
-
-# Use the trained model to predict the number of referrals for the remaining days
 forecast_y = regressor.predict(forecast_X)
 
-# Print the predicted number of referrals for each day
 for i, referral in enumerate(forecast_y):
     print("Day {}: {}".format(i+1, referral))
-
