@@ -21,7 +21,7 @@ df['impression_request_ratio'] = df['ae_impressions']/df['requests']
 
 
 #Hypothesis1: Apps with a higher than average revenue per impression may be more effective at monetizing their ad inventory.
-
+print('Hypothesis1: Apps with a higher than average revenue per impression may be more effective at monetizing their ad inventory.')
 
 average_rpi = df['revenue_per_impression'].mean()
 ranked_apps = df.groupby('app_id')['revenue_per_impression'].mean().sort_values(ascending=False)
@@ -37,7 +37,7 @@ plt.show()
 
 
 #Hypothesis2: Apps with a higher than average show rate but lower than average click rate may be displaying too many ads and causing user annoyance, leading to lower engagement and revenue.
-
+print('Hypothesis2: Apps with a higher than average show rate but lower than average click rate may be displaying too many ads and causing user annoyance, leading to lower engagement and revenue.')
 
 avg_show_rate = df['show_rate'].mean()
 avg_click_rate = df['click_rate'].mean()
@@ -56,7 +56,7 @@ plt.show()
 
 
 #Hypothesis3: Certain ad units may perform better than others. If an app uses multiple ad units, it is possible that some ad units perform better than others in terms of impressions, clicks, and revenue. By analyzing the performance of each ad unit, publishers could identify which ad units are most effective and adjust their ad strategies accordingly.
-
+print('Hypothesis3: Certain ad units may perform better than others. If an app uses multiple ad units, it is possible that some ad units perform better than others in terms of impressions, clicks, and revenue. By analyzing the performance of each ad unit, publishers could identify which ad units are most effective and adjust their ad strategies accordingly.')
 ad_format_ctr = df.groupby('ad_unit_code')['click_rate'].mean().reset_index()
 overall_avg_ctr = df['click_rate'].mean()
 high_ctr_ad_formats = ad_format_ctr[ad_format_ctr['click_rate'] > overall_avg_ctr]
@@ -79,7 +79,7 @@ for app in top_ad_units['app_id'].unique():
 
 
 #Hypothesis4 - An app with a high number of requests but a low number of impressions may indicate a technical issue or ad quality issue. If an app has a high number of ad requests but a low number of impressions, it could indicate that there is a technical issue with the app or ad server, or that the ads being served are not rendering properly. This could lead to lower revenue for the publisher as well as a poor user experience.
-
+print('An app with a high number of requests but a low number of impressions may indicate a technical issue or ad quality issue. If an app has a high number of ad requests but a low number of impressions, it could indicate that there is a technical issue with the app or ad server, or that the ads being served are not rendering properly. This could lead to lower revenue for the publisher as well as a poor user experience.')
 df['request_rate'] = df['requests'] / df['ae_responses']
 df['impression_rate'] = df['ae_impressions'] / df['requests']
 grouped_df = df.groupby('app_id')[['request_rate', 'impression_rate']].mean().reset_index()
